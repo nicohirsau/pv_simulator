@@ -37,6 +37,9 @@ To install all of them at once just use:
 pip install -r requirements.txt
 ```
 
+> I would recommend using a virtual environment.  
+> (For example, one managed with this fine piece of software: https://virtualenvwrapper.readthedocs.io/en/latest/)
+
 </br>
 
 ### 4. Install the project as a local pip package
