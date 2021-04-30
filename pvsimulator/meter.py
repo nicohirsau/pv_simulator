@@ -16,7 +16,7 @@ def simulate_household_output():
                 "watt_value": random.randint(0, 9000)
             }
         )
-        meter.send_message(message)
+        meter.publish_message(message)
         time.sleep(1)
 
 def main(args=None):
