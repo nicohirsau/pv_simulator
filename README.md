@@ -44,7 +44,7 @@ pip install -r requirements.txt
 
 ### 4. Install the project as a local pip package
 This project assumes to be installed as local pip egg.  
-To do this, you have at least these 3 choices:  
+To do this, you have at least these <del>3</del> 2 choices:  
 
 1. Install it through pip: 
 ```
