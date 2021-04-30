@@ -1,22 +1,45 @@
-import pika
+import amqpstorm
 
 class Sender(object):
-    def __init__(self, host, channel_name, clear_queue = True):
-        self.host = host
-        self.channel_name = channel_name
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                self.host
+    def __init__(
+            self, 
+            host = 'localhost', 
+            username = 'guest', 
+            password = 'guest', 
+            queue_name = 'queue'
+        ):
+        self._host = host
+        self._queue_name = queue_name
+        self._username = username
+        self._password = password
+        self.connected = False
+        
+    def connect(self):
+        try:
+            self._connection = amqpstorm.Connection(
+                self._host,
+                self._username,
+                self._password
             )
+            self._channel = self._connection.channel()
+            self._channel.queue.declare(
+                self._queue_name
+            )
+            self.connected = True
+        except amqpstorm.exception.AMQPConnectionError as exception:
+            print("Could not connect to rabbitMQ!")
+            self.connected = False
+        
+    def send_message(self, message_body):
+        if not self.connected:
+            print("Cannot send message! Sender is not connected!")
+            return
+        
+        message = amqpstorm.Message.create(
+            self._channel,
+            message_body,
+            properties = {
+                'content_type': 'text/plain'
+            }
         )
-        self.channel = self.connection.channel()
-        if clear_queue:
-            self.channel.queue_delete(self.channel_name)
-        self.channel.queue_declare(self.channel_name)
-    
-    def send_message(self, message):
-        self.channel.basic_publish(
-            exchange = '',
-            routing_key = self.channel_name,
-            body = message
-        )
+        message.publish(self._queue_name)
