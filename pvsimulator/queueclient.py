@@ -61,6 +61,14 @@ class QueueClient(object):
         except amqpstorm.exception.AMQPInvalidArgument:
             print("Could not send message: '", message_body, "'!")
             return False
+
+    def purge_queue(self):
+        if not self.connected:
+            print("Not connected to a queue! Cannot purge it!")
+            return False
+        
+        self._channel.queue.purge(self._queue_name)
+        return True
     
     def start_consuming_blocking(self):
         if not self.connected:

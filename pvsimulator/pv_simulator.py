@@ -22,6 +22,7 @@ class PV_Simulator(QueueClient):
 def simulate_photovoltaic_consumer():
     pv = PV_Simulator(queue_name = 'pv_simulation')
     pv.connect()
+    pv.purge_queue()
     pv.start_consuming_async()
     try:
         while True:
