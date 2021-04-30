@@ -4,9 +4,9 @@ import sys
 import time
 import random
 
-from pvsimulator.receiver import Receiver
+from pvsimulator.queueclient import QueueClient
 
-class PV_Simulator(Receiver):
+class PV_Simulator(QueueClient):
     def __init__(
             self, 
             host = 'localhost', 
@@ -22,16 +22,20 @@ class PV_Simulator(Receiver):
 def simulate_photovoltaic_consumer():
     pv = PV_Simulator(queue_name = 'pv_simulation')
     pv.connect()
-    pv.start_consuming_blocking()
-
-def main(args=None):
+    pv.start_consuming_async()
     try:
-        simulate_photovoltaic_consumer()
+        while True:
+            pass
     except KeyboardInterrupt:
+        pv.stop_consuming_async()
         print("Execution was cancelled by user!")
         exit(0)
     except Exception:
         exit(0)
+
+def main(args=None):
+    simulate_photovoltaic_consumer()
+    
 
 if __name__ == "__main__":
     sys.exit(main())

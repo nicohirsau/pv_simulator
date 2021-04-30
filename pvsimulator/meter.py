@@ -4,10 +4,10 @@ import sys
 import time
 import random
 
-from pvsimulator.sender import Sender
+from pvsimulator.queueclient import QueueClient
 
 def simulate_household_output():
-    meter = Sender(queue_name = 'pv_simulation')
+    meter = QueueClient(queue_name = 'pv_simulation')
     meter.connect()
     while True:
         message = json.dumps(
