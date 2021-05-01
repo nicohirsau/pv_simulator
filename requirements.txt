@@ -1,2 +1,2 @@
+AMQPStorm==2.8.4
 click==7.1.2
-pika==1.2.0
