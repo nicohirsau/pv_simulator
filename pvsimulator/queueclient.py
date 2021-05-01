@@ -2,6 +2,8 @@ import amqpstorm
 import threading
 import time
 
+from pvsimulator.exceptions import *
+
 class QueueClient(object):
     """
     The QueueClient represents a Client, which connects to a single RabbitMQ queue.
@@ -27,7 +29,6 @@ class QueueClient(object):
         self._password = password
         self.connected = False
 
-
         self._consuming = False
         self._should_consume = False
         self._consumer_thread = None
@@ -36,7 +37,9 @@ class QueueClient(object):
         """
         Try to connect the client to its queue.
 
-        Return: True, if the connection was successful.
+        Raises:
+            PVConnectionError if the connection to the RabbitMQ instance failed.
+            PVQueueConnectionError if the connection to the designated queue failed.
         """
         try:
             self._connection = amqpstorm.Connection(
@@ -44,20 +47,25 @@ class QueueClient(object):
                 self._username,
                 self._password
             )
+        except amqpstorm.AMQPConnectionError as e:
+            print(e)
+            raise PVConnectionError(
+                "Could not connect to RabbitMQ Service"
+            )
+
+        try:
             self._channel = self._connection.channel()
             self._channel.queue.declare(
                 self._queue_name
             )
-            self.connected = True
-            return True
-        except amqpstorm.exception.AMQPConnectionError as exception:
-            print("Could not connect to rabbitMQ!")
-            self.connected = False
-            return False
-        except amqpstorm.exception.AMQPInvalidArgument:
-            print("Could setup the channel!")
-            self.connected = False
-            return False
+        except amqpstorm.AMQPConnectionError as e:
+            print(e)
+            raise PVQueueConnectionError(
+                "Could not connect to Queue: ", self._queue_name
+            )
+        
+        self.connected = True
+
         
     def publish_message(self, message_body):
         """
@@ -66,11 +74,14 @@ class QueueClient(object):
         Param:
             message_body: The message, that should be published as plain text.
 
-        Return: True, if the message could be published successful.
+        Raises:
+            PVNotConnectedError if the Client is not connected properly.
+            PVMessagePublishingError if the message could not be published.
         """
         if not self.connected:
-            print("Cannot publish message! Client is not connected!")
-            return False
+            raise PVNotConnectedError(
+                "Cannot publish message! Client is not connected!"
+            )
         
         message = amqpstorm.Message.create(
             self._channel,
@@ -81,69 +92,78 @@ class QueueClient(object):
         )
         try:
             message.publish(self._queue_name)
-            return True
-        except amqpstorm.exception.AMQPInvalidArgument:
-            print("Could not publish message: '", message_body, "'!")
-            return False
+        except amqpstorm.exception.AMQPInvalidArgument as e:
+            print(e)
+            raise PVMessagePublishingError(
+                "Could not publish message: '", message_body, "'!"
+            )
 
     def purge_queue(self):
         """
         Delete all published messages in the queue.
 
-        Return: True, if the deletion was successful.
+        Raises:
+            PVNotConnectedError if the Client is not connected properly.
         """
         if not self.connected:
-            print("Not connected to a queue! Cannot purge it!")
-            return False
+            raise PVNotConnectedError(
+                "The client is not properly connected to the RabbitMQ service!"
+            )
         
         self._channel.queue.purge(self._queue_name)
-        return True
     
     def start_consuming_blocking(self):
         """
         Start to consume messages while blocking the thread doing it.
 
-        Return: True, if somehow the consuming process was stopped successfully.
+        Raises:
+            PVNotConnectedError if the Client is not connected properly.
         """
         if not self.connected:
-            print("Can't start consuming if not connected!")
-            return False
+            raise PVNotConnectedError(
+                "The client is not properly connected to the RabbitMQ service!"
+            )
         
         self._should_consume = True
         self._consume()
-        return True
 
     def start_consuming_async(self):
         """
         Start to consume messages using a seperate worker thread.
 
-        Return: True, if the thread could be started successfully.
+        Raises:
+            PVNotConnectedError if the Client is not connected properly.
+            PVQueueClientAlreadyConsumingError if the Client is already consuming.
         """
         if not self.connected:
-            print("Can't start consuming if not connected!")
-            return False
+            raise PVNotConnectedError(
+                "The client is not properly connected to the RabbitMQ service!"
+            )
+
+        if self._consuming:
+            raise PVQueueClientAlreadyConsumingError(
+                "Client is already consuming!"
+            )
         
         if not self._consumer_thread:
             self._consumer_thread = threading.Thread(
                 target = self._consume
             )
-
-        if self._consumer_thread.is_alive():
-            print("Client is already consuming!")
-            return False
         
         self._should_consume = True
         self._consumer_thread.start()
-        return True
 
     def stop_consuming_async(self):
         """
         Stops the consuming thread.
 
-        Return: True, if the thread could be stopped successfully.
+        Raises:
+            PVQueueClientNotConsumingError if the Client is not consuming.
         """
         if not self._consuming:
-            print("Client is not consuming!")
+            raise PVQueueClientNotConsumingError(
+                "Client is not consuming!"
+            )
             return False
         
         self._should_consume = False
