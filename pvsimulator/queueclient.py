@@ -14,7 +14,8 @@ class QueueClient(object):
             host = 'localhost', 
             username = 'guest', 
             password = 'guest', 
-            queue_name = 'queue'
+            queue_name = 'queue',
+            consuming_timeout = 0.25
         ):
         """
         Params:
@@ -32,6 +33,7 @@ class QueueClient(object):
         self._consuming = False
         self._should_consume = False
         self._consumer_thread = None
+        self._consuming_timeout = consuming_timeout
         
     def connect(self):
         """
@@ -188,7 +190,7 @@ class QueueClient(object):
                 self._channel.basic.ack(
                     result.method['delivery_tag']
                 )
-                time.sleep(0.25)
+                time.sleep(self._consuming_timeout)
         self._consuming = False
 
     def _on_message_received_callback(self, message_body):
