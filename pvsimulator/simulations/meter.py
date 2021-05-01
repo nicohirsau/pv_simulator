@@ -9,6 +9,7 @@ from datetime import datetime
 
 from pvsimulator.queueclient import QueueClient
 from pvsimulator.timemath import *
+from pvsimulator.simulations import configuration
 
 
 def get_normalized_meter_value(t):
@@ -31,7 +32,12 @@ def get_normalized_meter_value(t):
     return normalized_meter_value
 
 def simulate_one_day(timestep):
-    meter = QueueClient(queue_name="pv_simulation")
+    meter = QueueClient(
+        host = configuration.CONFIGURATION['host'],
+        username = configuration.CONFIGURATION['username'],
+        password = configuration.CONFIGURATION['password'],
+        queue_name = configuration.CONFIGURATION['queue_name']
+    )
     meter.connect()
     meter.purge_queue()
 
@@ -59,7 +65,12 @@ def simulate_one_day(timestep):
         print("Published: ", message_body)
 
 def simulate_normal_operation(timestep):
-    meter = QueueClient(queue_name="pv_simulation")
+    meter = QueueClient(
+        host = configuration.CONFIGURATION['host'],
+        username = configuration.CONFIGURATION['username'],
+        password = configuration.CONFIGURATION['password'],
+        queue_name = configuration.CONFIGURATION['queue_name']
+    )
     meter.connect()
     meter.purge_queue()
 
@@ -92,7 +103,14 @@ def simulate_normal_operation(timestep):
     '--timestep', '-t', default=1, type=click.INT,
     help='The amount of seconds to wait between each message.'
 )
-def main(mode, timestep):
+@click.option(
+    '--config', '-c', default=None, type=click.STRING,
+    help='The filepath to an optional configuration file.'
+)
+def main(mode, timestep, config):
+    if config:
+        configuration.read_config_file(config)
+
     try:
         if mode is 'oneday':
             simulate_one_day(timestep)

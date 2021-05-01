@@ -9,6 +9,7 @@ from datetime import datetime
 from pvsimulator import filewriter
 from pvsimulator.queueclient import QueueClient
 from pvsimulator.timemath import *
+from pvsimulator.simulations import configuration
 
 
 def get_normalized_pv_value(t):
@@ -68,7 +69,10 @@ class PV_Simulator(QueueClient):
 
 def simulate_photovoltaic_consumer(output, idletime):
     pv = PV_Simulator(
-        queue_name = 'pv_simulation', 
+        host = configuration.CONFIGURATION['host'],
+        username = configuration.CONFIGURATION['username'],
+        password = configuration.CONFIGURATION['password'],
+        queue_name = configuration.CONFIGURATION['queue_name'], 
         consuming_timeout = idletime,
         output_filepath = output
     )
@@ -84,7 +88,14 @@ def simulate_photovoltaic_consumer(output, idletime):
     '--idletime', '-i', default=0, type=click.FLOAT,
     help='The time, the consumer should idle between each queue access'
 )
-def main(output, idletime):
+@click.option(
+    '--config', '-c', default=None, type=click.STRING,
+    help='The filepath to an optional configuration file.'
+)
+def main(output, idletime, config):
+    if config:
+        configuration.read_config_file(config)
+
     try:
         simulate_photovoltaic_consumer(output, idletime)
     except KeyboardInterrupt:
