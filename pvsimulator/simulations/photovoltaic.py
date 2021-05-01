@@ -1,3 +1,4 @@
+import click
 import json
 import math
 import random
@@ -37,8 +38,10 @@ class PV_Simulator(QueueClient):
             username = 'guest', 
             password = 'guest', 
             queue_name = 'queue',
-            consuming_timeout = 0.25
+            consuming_timeout = 0.25,
+            output_filepath = 'output.csv'
         ):
+        self._output_filepath = output_filepath
         super().__init__(host, username, password, queue_name, consuming_timeout)
     
     def _on_message_received_callback(self, method_body):
@@ -61,25 +64,35 @@ class PV_Simulator(QueueClient):
             method_body_json["photovoltaic_power_value_watt"],
             method_body_json["combined_power_value_watt"],
         ]
-        filewriter.file_append("output.csv", output)
+        filewriter.file_append(self._output_filepath, output)
 
-def simulate_photovoltaic_consumer():
-    pv = PV_Simulator(queue_name = 'pv_simulation', consuming_timeout = 0)
+def simulate_photovoltaic_consumer(output, idletime):
+    pv = PV_Simulator(
+        queue_name = 'pv_simulation', 
+        consuming_timeout = idletime,
+        output_filepath = output
+    )
     pv.connect()
-    pv.start_consuming_async()
+    pv.start_consuming_blocking()
+
+@click.command()
+@click.option(
+    '--output', '-o', default='output.csv', type=click.STRING,
+    help='The file, to which the output will be written to'
+)
+@click.option(
+    '--idletime', '-i', default=0, type=click.FLOAT,
+    help='The time, the consumer should idle between each queue access'
+)
+def main(output, idletime):
     try:
-        while True:
-            pass
+        simulate_photovoltaic_consumer(output, idletime)
     except KeyboardInterrupt:
-        pv.stop_consuming_async()
         print("Execution was cancelled by user!")
         exit(0)
-    except Exception:
+    except Exception as e:
+        print(e)
         exit(0)
-
-def main(args=None):
-    simulate_photovoltaic_consumer()
-    
 
 if __name__ == "__main__":
     sys.exit(main())

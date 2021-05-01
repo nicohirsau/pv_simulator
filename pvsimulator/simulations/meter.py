@@ -1,4 +1,5 @@
 import calendar
+import click
 import json
 import math
 import random
@@ -29,7 +30,7 @@ def get_normalized_meter_value(t):
     normalized_meter_value = meter_value / 5.0
     return normalized_meter_value
 
-def simulate_one_day():
+def simulate_one_day(timestep):
     meter = QueueClient(queue_name="pv_simulation")
     meter.connect()
     meter.purge_queue()
@@ -39,7 +40,7 @@ def simulate_one_day():
     )
     seconds_in_a_day = 86400
 
-    for deltasecond in range(seconds_in_a_day):
+    for deltasecond in range(0, seconds_in_a_day, timestep):
         t_now = t0 + deltasecond
         normalized_daytime = get_normalized_daytime(t_now)
         normalized_meter_power_value = get_normalized_meter_value(normalized_daytime)
@@ -57,7 +58,7 @@ def simulate_one_day():
         )
         print("Published: ", message_body)
 
-def simulate_normal_operation():
+def simulate_normal_operation(timestep):
     meter = QueueClient(queue_name="pv_simulation")
     meter.connect()
     meter.purge_queue()
@@ -79,13 +80,28 @@ def simulate_normal_operation():
             message_body
         )
         print("Published: ", message_body)
+        time.sleep(timestep)
 
-def main(args=None):
+
+@click.command()
+@click.option(
+    '--mode', '-m', default='oneday', type=click.Choice(['oneday', 'endless']), 
+    help='The kind of simulation that should be run.'
+)
+@click.option(
+    '--timestep', '-t', default=1, type=click.INT,
+    help='The amount of seconds to wait between each message.'
+)
+def main(mode, timestep):
     try:
-        simulate_one_day()
+        if mode is 'oneday':
+            simulate_one_day(timestep)
+        elif mode is 'endless':
+            simulate_normal_operation(timestep)
     except KeyboardInterrupt:
-        print("Execution was interrupted by the user!")
-        exit(0)
+        print("Execution was cancelled by user!")
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    main()
