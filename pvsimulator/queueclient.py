@@ -155,9 +155,9 @@ class QueueClient(object):
         self._should_consume = True
         self._consumer_thread.start()
 
-    def stop_consuming_async(self):
+    def stop_consuming(self):
         """
-        Stops the consuming thread.
+        Stops the consumption of messages.
 
         Raises:
             PVQueueClientNotConsumingError if the Client is not consuming.
@@ -169,7 +169,10 @@ class QueueClient(object):
             return False
         
         self._should_consume = False
-        self._consumer_thread.join()
+        if self._consumer_thread:
+            if self._consumer_thread.is_alive:
+                self._consumer_thread.join()
+        
         return True
     
     def _consume(self):
