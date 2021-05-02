@@ -90,7 +90,7 @@ How to pass the config filepath is defined under the usage block of `The Meter` 
 
 </br>
 
-# Usage
+# Simulation informations
 The simulation consists of 2 parts:
 - The Meter, simulating an average household power consumption
 - The Photovoltaic System, simulating an average photovoltaic power generation
