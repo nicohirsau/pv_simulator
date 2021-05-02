@@ -10,7 +10,6 @@ This project is a implementation of the `PV Simulator Challenge`.
 </br>
 
 # Setup
-## Prerequisites
 To run this simulation, some prerequisites have to be made.
 
 ### 1. Setup a RabbitMQ instance
@@ -86,7 +85,7 @@ queue_name = pv_simulation
 If you choose to use custom values, you should copy this file and 
 edit the content of the copy.  
 So, the changes are not tracked by git.  
-How to pass the config filepath is defined under the usage block of `The Meter` and `Photovoltaic`, further below.
+How to pass the config filepath is shown further below.
 
 </br>
 
