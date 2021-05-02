@@ -179,3 +179,22 @@ where the comma seperated colums mean the following:
 `timestamp|meter_power_value|photovoltaic_power_value|combined_power_value`  
 > The timestamp is a `seconds since epoch` timestamp.  
 > All power values are in `Watt`.
+
+</br>
+
+# Tests
+For demonstration purposes, I implemented a few automated test cases with the `pytest` framework (https://docs.pytest.org/en/6.2.x/).  
+  
+Since they are not part of the implementation logic itself, I did not put the `pytest` pip requirement in the `requirements.txt`-file.    
+So, to run them first install pytest through
+```
+pip install pytest
+```
+and then simply run
+```
+pytest
+```
+in the root directory of this project.  
+  
+> It has to be run from the root directory, so that the relative path to the `./tests/test.conf`-file matches.  
+> In this config file, you can setup your RabbitMQ settings for the test runs.
