@@ -90,7 +90,7 @@ How to pass the config filepath is defined under the usage block of `The Meter` 
 
 </br>
 
-# Simulation informations
+# Simulation information
 The simulation consists of 2 parts:
 - The Meter, simulating an average household power consumption
 - The Photovoltaic System, simulating an average photovoltaic power generation
@@ -146,7 +146,7 @@ The Photovoltaic simulation runs until stopped by the user `(Ctrl+C)` or the rec
 
 </br>
 
-## Example Usage
+# Example Usage
 
 In one terminal start the meter simulation with:
 ```
