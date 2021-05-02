@@ -50,6 +50,7 @@ class PV_Simulator(QueueClient):
         super().__init__(host, username, password, queue_name, consuming_timeout)
     
     def _on_message_received_callback(self, method_body):
+        # Check, if the simulation should be stopped
         if method_body == "STOP_SIMULATION":
             self.stop_consuming()
             return
@@ -57,24 +58,29 @@ class PV_Simulator(QueueClient):
         print("Received: ", method_body)
         method_body_json = json.loads(method_body)
 
+        # Generate the pseudo random photovoltaic power value
         timestamp_value = int(method_body_json["timestamp"])
         normalized_daytime = get_normalized_daytime(timestamp_value)
         normalized_pv_power_value = get_normalized_pv_value(normalized_daytime)
         random_absolute_pv_power_value = normalized_pv_power_value * 3250 + random.randint(-50, 50)
         
+        # Calculate the combined power value
         combined_power_value = random_absolute_pv_power_value + method_body_json["meter_power_value_watt"]
         
-        method_body_json["combined_power_value_watt"] = combined_power_value
-        method_body_json["photovoltaic_power_value_watt"] = random_absolute_pv_power_value
+        # Generate the new csv output row
         output = [
             method_body_json["timestamp"],
             method_body_json["meter_power_value_watt"],
-            method_body_json["photovoltaic_power_value_watt"],
-            method_body_json["combined_power_value_watt"],
+            random_absolute_pv_power_value,
+            combined_power_value,
         ]
+        # Append the row to the output file
         filewriter.file_append(self._output_filepath, output)
 
 def simulate_photovoltaic_consumer(output, idletime):
+    '''
+    Start the photovoltaic simulation while blocking the Thread.
+    '''
     pv = PV_Simulator(
         host = configuration.CONFIGURATION['host'],
         username = configuration.CONFIGURATION['username'],
@@ -100,9 +106,11 @@ def simulate_photovoltaic_consumer(output, idletime):
     help='The filepath to an optional configuration file. (default: \'None\')'
 )
 def main(output, idletime, config):
+    # If the config filepath was passed, try to load it
     if config:
         configuration.read_config_file(config)
 
+    # Run the simulation until it stops or is cancelled
     try:
         simulate_photovoltaic_consumer(output, idletime)
     except KeyboardInterrupt:

@@ -8,6 +8,15 @@ CONFIGURATION = {
 }
 
 def read_config_file(filepath):
+    '''
+    Tries to load a simulation configuration from the filepath.
+    The values will be applied to the global CONFIGURATION dictionary.
+
+    If the config file could not be found or is not formatted correctly,
+    a message will be printed and the values will be left at their default values.
+
+    Values, that are not found in the config file are skipped.
+    '''
     config_parser = configparser.RawConfigParser()
     if len(config_parser.read([filepath])) is 0:
         print("Could not find config file at location", filepath)

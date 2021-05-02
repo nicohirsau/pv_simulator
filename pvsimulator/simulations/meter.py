@@ -31,7 +31,38 @@ def get_normalized_meter_value(t):
     normalized_meter_value = meter_value / 5.0
     return normalized_meter_value
 
+def construct_message_at_time(t):
+    '''
+    Constructs the message body at the time t.
+    The value is based on the simulated output + a random value.
+
+    Params:
+        t: Seconds since epoch.
+    '''
+    # Generate the pseudo random meter value
+    normalized_daytime = get_normalized_daytime(t_now)
+    normalized_meter_power_value = get_normalized_meter_value(
+        normalized_daytime
+    )
+    random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
+
+    # Pack all values in one dict. Ready to be published.
+    message_body = json.dumps(
+        {
+            "timestamp": t_now,
+            "meter_power_value_watt": random_absolute_meter_power_value
+        }
+    )
+    return message_body
+
 def simulate_one_day(timestep):
+    '''
+    Runs the meter simulation for one simulated day.
+    After finishing it, it will send the stop message and exit.
+
+    Params:
+        timestep: The amount of seconds to wait between each message.
+    '''
     meter = QueueClient(
         host = configuration.CONFIGURATION['host'],
         username = configuration.CONFIGURATION['username'],
@@ -48,24 +79,23 @@ def simulate_one_day(timestep):
 
     for deltasecond in range(0, seconds_in_a_day, timestep):
         t_now = t0 + deltasecond
-        normalized_daytime = get_normalized_daytime(t_now)
-        normalized_meter_power_value = get_normalized_meter_value(normalized_daytime)
-        random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
-
-        message_body = json.dumps(
-            {
-                "timestamp": t_now,
-                "meter_power_value_watt": random_absolute_meter_power_value
-            }
-        )
+        message_body = construct_message_at_time(t_now)
 
         meter.publish_message(
             message_body
         )
         print("Published: ", message_body)
+
     meter.publish_message("STOP_SIMULATION")
 
 def simulate_normal_operation(timestep):
+    '''
+    Runs the simulation in a 'live' mode, using the current time.
+    It will run, until it is stopped by the user.
+
+    Params:
+        timestep: The amount of seconds to wait between each message.
+    '''
     meter = QueueClient(
         host = configuration.CONFIGURATION['host'],
         username = configuration.CONFIGURATION['username'],
@@ -78,22 +108,15 @@ def simulate_normal_operation(timestep):
     try:
         while True:
             t_now = int(time.time())
-            normalized_daytime = get_normalized_daytime(t_now)
-            normalized_meter_power_value = get_normalized_meter_value(normalized_daytime)
-            random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
 
-            message_body = json.dumps(
-                {
-                    "timestamp": t_now,
-                    "meter_power_value_watt": random_absolute_meter_power_value
-                }
-            )
+            message_body = construct_message_at_time(t_now)
 
             meter.publish_message(
                 message_body
             )
             print("Published: ", message_body)
             time.sleep(timestep)
+
     except KeyboardInterrupt:
         meter.publish_message("STOP_SIMULATION")
         print("Execution was cancelled by user!")
