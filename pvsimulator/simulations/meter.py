@@ -40,7 +40,7 @@ def construct_message_at_time(t):
         t: Seconds since epoch.
     '''
     # Generate the pseudo random meter value
-    normalized_daytime = get_normalized_daytime(t_now)
+    normalized_daytime = get_normalized_daytime(t)
     normalized_meter_power_value = get_normalized_meter_value(
         normalized_daytime
     )
@@ -49,7 +49,7 @@ def construct_message_at_time(t):
     # Pack all values in one dict. Ready to be published.
     message_body = json.dumps(
         {
-            "timestamp": t_now,
+            "timestamp": t,
             "meter_power_value_watt": random_absolute_meter_power_value
         }
     )
