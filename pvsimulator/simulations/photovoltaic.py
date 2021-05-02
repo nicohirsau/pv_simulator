@@ -19,7 +19,7 @@ def get_normalized_pv_value(t):
 
     The formula can be examinated on https://www.desmos.com/calculator
     The formula used is this one: 
-    \max\left(-\frac{\left(x-7\right)^{2}}{10}+1,\ -\frac{\left(x-6.3\right)^{2}}{100}+.2\right)
+    \max\left(\max\left(-\frac{\left(x-7\right)^{2}}{10}+1,\ -\frac{\left(x-6.3\right)^{2}}{100}+.2\right),\ 0\right)
     It tries to mimic the Graph as normalized values.
     
     f(0) = photovoltaic output at 00:00:00
@@ -29,6 +29,10 @@ def get_normalized_pv_value(t):
     normalized_photovoltaic_value = max(
         -(math.pow(x - 7  , 2) / 10 ) + 1,
         -(math.pow(x - 6.3, 2) / 100) + 2
+    )
+    normalized_photovoltaic_value = max(
+        normalized_photovoltaic_value,
+        0
     )
     return normalized_photovoltaic_value
 
@@ -53,7 +57,6 @@ class PV_Simulator(QueueClient):
         normalized_daytime = get_normalized_daytime(timestamp_value)
         normalized_pv_power_value = get_normalized_pv_value(normalized_daytime)
         random_absolute_pv_power_value = normalized_pv_power_value * 3250 + random.randint(-50, 50)
-        random_absolute_pv_power_value = max(random_absolute_pv_power_value, 0)
         
         combined_power_value = random_absolute_pv_power_value + method_body_json["meter_power_value_watt"]
         
