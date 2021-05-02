@@ -49,28 +49,28 @@ class PV_Simulator(QueueClient):
         self._output_filepath = output_filepath
         super().__init__(host, username, password, queue_name, consuming_timeout)
     
-    def _on_message_received_callback(self, method_body):
+    def _on_message_received_callback(self, message_body):
         # Check, if the simulation should be stopped
-        if method_body == "STOP_SIMULATION":
+        if message_body == "STOP_SIMULATION":
             self.stop_consuming()
             return
         
-        print("Received: ", method_body)
-        method_body_json = json.loads(method_body)
+        print("Received: ", message_body)
+        message_body_json = json.loads(message_body)
 
         # Generate the pseudo random photovoltaic power value
-        timestamp_value = int(method_body_json["timestamp"])
+        timestamp_value = int(message_body_json["timestamp"])
         normalized_daytime = get_normalized_daytime(timestamp_value)
         normalized_pv_power_value = get_normalized_pv_value(normalized_daytime)
         random_absolute_pv_power_value = normalized_pv_power_value * 3250 + random.randint(-50, 50)
         
         # Calculate the combined power value
-        combined_power_value = random_absolute_pv_power_value + method_body_json["meter_power_value_watt"]
+        combined_power_value = random_absolute_pv_power_value + message_body_json["meter_power_value_watt"]
         
         # Generate the new csv output row
         output = [
-            method_body_json["timestamp"],
-            method_body_json["meter_power_value_watt"],
+            message_body_json["timestamp"],
+            message_body_json["meter_power_value_watt"],
             random_absolute_pv_power_value,
             combined_power_value,
         ]
