@@ -63,6 +63,7 @@ def simulate_one_day(timestep):
             message_body
         )
         print("Published: ", message_body)
+    meter.publish_message("STOP_SIMULATION")
 
 def simulate_normal_operation(timestep):
     meter = QueueClient(
@@ -74,38 +75,43 @@ def simulate_normal_operation(timestep):
     meter.connect()
     meter.purge_queue()
 
-    while True:
-        t_now = int(time.time())
-        normalized_daytime = get_normalized_daytime(t_now)
-        normalized_meter_power_value = get_normalized_meter_value(normalized_daytime)
-        random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
+    try:
+        while True:
+            t_now = int(time.time())
+            normalized_daytime = get_normalized_daytime(t_now)
+            normalized_meter_power_value = get_normalized_meter_value(normalized_daytime)
+            random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
 
-        message_body = json.dumps(
-            {
-                "timestamp": t_now,
-                "meter_power_value_watt": random_absolute_meter_power_value
-            }
-        )
+            message_body = json.dumps(
+                {
+                    "timestamp": t_now,
+                    "meter_power_value_watt": random_absolute_meter_power_value
+                }
+            )
 
-        meter.publish_message(
-            message_body
-        )
-        print("Published: ", message_body)
-        time.sleep(timestep)
+            meter.publish_message(
+                message_body
+            )
+            print("Published: ", message_body)
+            time.sleep(timestep)
+    except KeyboardInterrupt:
+        meter.publish_message("STOP_SIMULATION")
+        print("Execution was cancelled by user!")
+        return
 
 
 @click.command()
 @click.option(
     '--mode', '-m', default='oneday', type=click.Choice(['oneday', 'endless']), 
-    help='The kind of simulation that should be run.'
+    help='The kind of simulation that should be run. (default: \'oneday\')'
 )
 @click.option(
     '--timestep', '-t', default=1, type=click.INT,
-    help='The amount of seconds to wait between each message.'
+    help='The amount of seconds to wait between each message. (default: \'1\')'
 )
 @click.option(
     '--config', '-c', default=None, type=click.STRING,
-    help='The filepath to an optional configuration file.'
+    help='The filepath to an optional configuration file. (default: \'None\')'
 )
 def main(mode, timestep, config):
     if config:

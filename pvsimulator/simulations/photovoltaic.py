@@ -50,6 +50,10 @@ class PV_Simulator(QueueClient):
         super().__init__(host, username, password, queue_name, consuming_timeout)
     
     def _on_message_received_callback(self, method_body):
+        if method_body == "STOP_SIMULATION":
+            self.stop_consuming()
+            return
+        
         print("Received: ", method_body)
         method_body_json = json.loads(method_body)
 
@@ -85,15 +89,15 @@ def simulate_photovoltaic_consumer(output, idletime):
 @click.command()
 @click.option(
     '--output', '-o', default='output.csv', type=click.STRING,
-    help='The file, to which the output will be written to'
+    help='The file, to which the output will be written to (default: \'output.csv\')'
 )
 @click.option(
     '--idletime', '-i', default=0, type=click.FLOAT,
-    help='The time, the consumer should idle between each queue access'
+    help='The time in seconds, the consumer should idle between each queue access (default: \'0.0\')'
 )
 @click.option(
     '--config', '-c', default=None, type=click.STRING,
-    help='The filepath to an optional configuration file.'
+    help='The filepath to an optional configuration file. (default: \'None\')'
 )
 def main(output, idletime, config):
     if config:
