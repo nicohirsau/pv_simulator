@@ -196,4 +196,5 @@ pytest
 in the root directory of this project.  
   
 > It has to be run from the root directory, so that the relative path to the `./tests/test.conf`-file matches.  
-> In this config file, you can setup your RabbitMQ settings for the test runs.
+> In this config file, you can setup your RabbitMQ settings for the test runs.  
+> Consider using `git update-index --assume-unchanged tests/test.conf` to not track changes on this config.
