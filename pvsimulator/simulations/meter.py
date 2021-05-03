@@ -44,7 +44,7 @@ def construct_message_at_time(t):
     normalized_meter_power_value = get_normalized_meter_value(
         normalized_daytime
     )
-    random_absolute_meter_power_value = normalized_meter_power_value * 9000 + random.randint(-50, 50)
+    random_absolute_meter_power_value = normalized_meter_power_value * 8500 + random.randint(-50, 50)
 
     # Pack all values in one dict. Ready to be published.
     message_body = json.dumps(
